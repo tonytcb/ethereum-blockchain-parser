@@ -1,0 +1,21 @@
+linters:
+  enable:
+    - asciicheck
+    - godot
+    - cyclop
+    - gomnd
+    - errcheck
+    - gosimple
+    - ineffassign
+    - unused
+    - unparam
+    - govet
+    - bodyclose
+    - errname
+    - gofmt
+    - goimports
+    - revive
+
+linters-settings:
+  cyclop:
+    max-complexity: 20
