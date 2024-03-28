@@ -16,7 +16,7 @@ func main() {
 
 	logger.Info("starting app...")
 
-	cfg, err := config.Load("./config/default.env", "default.env")
+	cfg, err := config.Load()
 	if err != nil {
 		logger.Error("failed to load config", "error", err)
 		return

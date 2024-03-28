@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
@@ -18,6 +19,9 @@ type Config struct {
 	Env      string `mapstructure:"ENV"`
 	LogLevel string `mapstructure:"LOG_LEVEL"`
 	HTTPPort string `mapstructure:"HTTP_PORT"`
+
+	EthereumRpcAPIURL string        `mapstructure:"ETHEREUM_RPC_API_URL"`
+	PoolingTime       time.Duration `mapstructure:"POOLING_TIME"`
 }
 
 func (c *Config) IsValid() error {
@@ -26,9 +30,11 @@ func (c *Config) IsValid() error {
 
 func (c *Config) LogFields() map[string]interface{} {
 	return map[string]interface{}{
-		"Env":      c.Env,
-		"LogLevel": c.LogLevel,
-		"HTTPPort": c.HTTPPort,
+		"AppName":           c.AppName,
+		"Env":               c.Env,
+		"LogLevel":          c.LogLevel,
+		"HTTPPort":          c.HTTPPort,
+		"EthereumRpcAPIURL": c.EthereumRpcAPIURL,
 	}
 }
 
