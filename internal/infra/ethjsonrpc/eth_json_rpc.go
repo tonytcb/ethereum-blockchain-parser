@@ -13,8 +13,6 @@ import (
 	"github.com/tonytcb/ethereum-blockchain-parser/internal/domain"
 )
 
-const id = 1
-
 type Options func(*EthJSONRpc)
 
 func WithHTTPClient(c *http.Client) Options {
@@ -31,11 +29,13 @@ type Config struct {
 type EthJSONRpc struct {
 	cfg        *Config
 	httpClient *http.Client
+	currentID  int64
 }
 
 func NewEthJSONRpc(cfg *Config, opts ...Options) *EthJSONRpc {
 	e := &EthJSONRpc{
-		cfg: cfg,
+		currentID: 0,
+		cfg:       cfg,
 		httpClient: &http.Client{
 			Timeout: cfg.RequestTimeout,
 		},
@@ -49,7 +49,9 @@ func NewEthJSONRpc(cfg *Config, opts ...Options) *EthJSONRpc {
 }
 
 func (e *EthJSONRpc) NewFilter(ctx context.Context, address string) (string, error) {
-	payload := newRequestPayload(id, ethNewFilterMethod, newFilterParams{
+	e.currentID++
+
+	payload := newRequestPayload(e.currentID, ethNewFilterMethod, newFilterParams{
 		Params: []newFilterParamsObjects{
 			{
 				Address: address,
@@ -76,7 +78,9 @@ func (e *EthJSONRpc) NewFilter(ctx context.Context, address string) (string, err
 }
 
 func (e *EthJSONRpc) FetchTransactions(ctx context.Context, address string) ([]domain.Transaction, error) {
-	payload := newRequestPayload(id, ethGetFilterChangesMethod, getFilterChangesParams{Addresses: []string{address}})
+	e.currentID++
+
+	payload := newRequestPayload(e.currentID, ethGetFilterChangesMethod, getFilterChangesParams{Addresses: []string{address}})
 
 	resPayload, err := e.doPost(ctx, payload)
 	if err != nil {
@@ -108,7 +112,9 @@ func (e *EthJSONRpc) FetchTransactions(ctx context.Context, address string) ([]d
 }
 
 func (e *EthJSONRpc) RemoveFilter(ctx context.Context, address string) error {
-	payload := newRequestPayload(id, ethUninstallFilterMethod, uninstallFilterParams{Addresses: []string{address}})
+	e.currentID++
+
+	payload := newRequestPayload(e.currentID, ethUninstallFilterMethod, uninstallFilterParams{Addresses: []string{address}})
 
 	resPayload, err := e.doPost(ctx, payload)
 	if err != nil {
