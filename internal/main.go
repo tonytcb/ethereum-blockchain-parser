@@ -19,11 +19,19 @@ func main() {
 		return
 	}
 
+	logLevel := slog.LevelInfo
+	if cfg.LogLevel == "debug" {
+		logLevel = slog.LevelDebug
+	}
+	logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel}))
+
+	slog.SetDefault(logger)
+
 	logger.Info("Application configurations", "data", cfg.LogFields())
 
 	appCtx, cancel := context.WithCancel(context.Background())
 
-	application, err := NewApplication(appCtx, cfg)
+	application, err := NewApplication(appCtx, cfg, logger)
 	if err != nil {
 		logger.Error("failed to create application", "error", err)
 		return

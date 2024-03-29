@@ -51,12 +51,10 @@ func NewEthJSONRpc(cfg *Config, opts ...Options) *EthJSONRpc {
 func (e *EthJSONRpc) NewFilter(ctx context.Context, address string) (string, error) {
 	e.currentID++
 
-	payload := newRequestPayload(e.currentID, ethNewFilterMethod, newFilterParams{
-		Params: []newFilterParamsObjects{
-			{
-				Address: address,
-			},
-		},
+	payload := newRequestPayload(e.currentID, ethNewFilterMethod, []struct {
+		Address string `json:"address"`
+	}{
+		{Address: address},
 	})
 
 	resPayload, err := e.doPost(ctx, payload)
@@ -80,7 +78,7 @@ func (e *EthJSONRpc) NewFilter(ctx context.Context, address string) (string, err
 func (e *EthJSONRpc) FetchTransactions(ctx context.Context, address string) ([]domain.Transaction, error) {
 	e.currentID++
 
-	payload := newRequestPayload(e.currentID, ethGetFilterChangesMethod, getFilterChangesParams{Addresses: []string{address}})
+	payload := newRequestPayload(e.currentID, ethGetFilterChangesMethod, []string{address})
 
 	resPayload, err := e.doPost(ctx, payload)
 	if err != nil {
@@ -114,7 +112,7 @@ func (e *EthJSONRpc) FetchTransactions(ctx context.Context, address string) ([]d
 func (e *EthJSONRpc) RemoveFilter(ctx context.Context, address string) error {
 	e.currentID++
 
-	payload := newRequestPayload(e.currentID, ethUninstallFilterMethod, uninstallFilterParams{Addresses: []string{address}})
+	payload := newRequestPayload(e.currentID, ethUninstallFilterMethod, []string{address})
 
 	resPayload, err := e.doPost(ctx, payload)
 	if err != nil {
@@ -144,6 +142,8 @@ func (e *EthJSONRpc) doPost(ctx context.Context, payload requestPayload) ([]byte
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating new request")
 	}
+
+	req.Header.Set("Content-Type", "application/json")
 
 	res, err := e.httpClient.Do(req)
 	if err != nil {

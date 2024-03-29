@@ -2,22 +2,60 @@ package main
 
 import (
 	"context"
+	"log/slog"
+
+	"golang.org/x/sync/errgroup"
+
+	"github.com/tonytcb/ethereum-blockchain-parser/pkg/domain"
+	"github.com/tonytcb/ethereum-blockchain-parser/pkg/infra/ethjsonrpc"
+	"github.com/tonytcb/ethereum-blockchain-parser/pkg/infra/eventlistener"
+	"github.com/tonytcb/ethereum-blockchain-parser/pkg/infra/storage"
 )
 
 type Application struct {
-	cfg *Config
+	cfg           *Config
+	logger        *slog.Logger
+	eventListener domain.EventListener
+	httpServer    *HTTPServer
 }
 
-func NewApplication(_ context.Context, cfg *Config) (*Application, error) {
+func NewApplication(_ context.Context, cfg *Config, logger *slog.Logger) (*Application, error) {
+	var (
+		repository = storage.NewInMemory()
+		api        = ethjsonrpc.NewEthJSONRpc(&ethjsonrpc.Config{
+			APIURL:         cfg.EthereumRPCAPIURL,
+			RequestTimeout: cfg.RequestTimeout,
+		})
+		eventListener = eventlistener.NewPoolingEventListener(
+			api,
+			repository,
+			eventlistener.WithLogger(logger),
+			eventlistener.WithConfig(&eventlistener.Config{PoolingTime: cfg.PoolingTime}),
+		)
+
+		parser = domain.NewParser(repository, eventListener)
+
+		httpServer = NewHTTPServer(cfg.HTTPPort, parser)
+	)
+
 	return &Application{
-		cfg: cfg,
+		logger:        logger,
+		cfg:           cfg,
+		eventListener: eventListener,
+		httpServer:    httpServer,
 	}, nil
 }
 
-func (a *Application) Run(_ context.Context) error {
+func (a *Application) Run(ctx context.Context) error {
+	errGroup, _ := errgroup.WithContext(ctx)
+
+	errGroup.Go(func() error {
+		return a.httpServer.Start()
+	})
+
 	return nil
 }
 
 func (a *Application) Stop() error {
-	return nil
+	return a.httpServer.Stop()
 }

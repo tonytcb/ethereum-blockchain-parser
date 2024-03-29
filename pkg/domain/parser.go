@@ -35,6 +35,14 @@ type parser struct {
 	eventListener EventListener
 }
 
+func NewParser(repo Repository, eventListener EventListener) Parser {
+	return &parser{
+		logger:        slog.Default(), // @TODO to be optional
+		repo:          repo,
+		eventListener: eventListener,
+	}
+}
+
 func (p *parser) GetCurrentBlock() int {
 	//TODO implement me
 	panic("implement me")
@@ -42,7 +50,7 @@ func (p *parser) GetCurrentBlock() int {
 
 func (p *parser) GetTransactions(address string) []Transaction {
 	transactions, err := p.repo.GetTransactions(context.Background(), address)
-	if err != nil && !errors.Is(err, ErrAddressNotFound) {
+	if err != nil && errors.Is(err, ErrAddressNotFound) {
 		return []Transaction{}
 	}
 

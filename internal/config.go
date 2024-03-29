@@ -18,6 +18,7 @@ type Config struct {
 	HTTPPort          string        `mapstructure:"HTTP_PORT"`
 	EthereumRPCAPIURL string        `mapstructure:"ETHEREUM_RPC_API_URL"`
 	PoolingTime       time.Duration `mapstructure:"POOLING_TIME"`
+	RequestTimeout    time.Duration `mapstructure:"REQUEST_TIMEOUT"`
 }
 
 func (c *Config) IsValid() error {

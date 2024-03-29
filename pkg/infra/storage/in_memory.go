@@ -12,6 +12,13 @@ type InMemory struct {
 	transactions map[string][]domain.Transaction
 }
 
+func NewInMemory() *InMemory {
+	return &InMemory{
+		mu:           sync.RWMutex{},
+		transactions: make(map[string][]domain.Transaction),
+	}
+}
+
 func (s *InMemory) Add(_ context.Context, address string, transactions []domain.Transaction) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -27,7 +34,7 @@ func (s *InMemory) Add(_ context.Context, address string, transactions []domain.
 
 func (s *InMemory) GetTransactions(_ context.Context, address string) ([]domain.Transaction, error) {
 	s.mu.RLock()
-	defer s.mu.Unlock()
+	defer s.mu.RUnlock()
 
 	if _, ok := s.transactions[address]; !ok {
 		return []domain.Transaction{}, domain.ErrAddressNotFound
