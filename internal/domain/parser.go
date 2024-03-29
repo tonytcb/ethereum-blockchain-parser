@@ -2,12 +2,9 @@ package domain
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 )
-
-//type Storage interface {
-//	GetLastParsedBlock(blockID int) (int, error)
-//}
 
 // ============================ interfaces
 
@@ -22,6 +19,10 @@ type Parser interface {
 	GetTransactions(address string) []Transaction
 }
 
+type Repository interface {
+	GetTransactions(ctx context.Context, address string) ([]Transaction, error)
+}
+
 type EventListener interface {
 	Subscribe(ctx context.Context, address string) error
 }
@@ -30,12 +31,22 @@ type EventListener interface {
 
 type parser struct {
 	logger        *slog.Logger
+	repo          Repository
 	eventListener EventListener
 }
 
 func (p *parser) GetCurrentBlock() int {
 	//TODO implement me
 	panic("implement me")
+}
+
+func (p *parser) GetTransactions(address string) []Transaction {
+	transactions, err := p.repo.GetTransactions(context.Background(), address)
+	if err != nil && !errors.Is(err, ErrAddressNotFound) {
+		return []Transaction{}
+	}
+
+	return transactions
 }
 
 func (p *parser) Subscribe(address string) bool {
@@ -47,11 +58,6 @@ func (p *parser) Subscribe(address string) bool {
 	}
 
 	return err == nil
-}
-
-func (p *parser) GetTransactions(address string) []Transaction {
-	//TODO implement me
-	panic("implement me")
 }
 
 // 1. creates an event listener to pool changes on new blocks
