@@ -27,8 +27,8 @@ lint:
 
 ## tests: runs all tests, with no Docker
 tests:
-	go test -v -race -tags=integration ./...
+	go test -v -race -tags=integration ./pkg/...
 
 ## generate-mocks: generates mocks for all interfaces through mockery
 generate-mocks:
-	- mockery --all --dir ./internal --output ./test/mocks --exported --case=underscore
+	- mockery --all --dir ./pkg --output ./pkg/test/mocks --exported --case=underscore

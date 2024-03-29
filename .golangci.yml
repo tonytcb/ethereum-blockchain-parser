@@ -19,3 +19,7 @@ linters:
 linters-settings:
   cyclop:
     max-complexity: 20
+
+issues:
+  exclude-files:
+    - pkg/domain/hexutil.go

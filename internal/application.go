@@ -19,7 +19,7 @@ type Application struct {
 	httpServer    *HTTPServer
 }
 
-func NewApplication(_ context.Context, cfg *Config, logger *slog.Logger) (*Application, error) {
+func NewApplication(_ context.Context, cfg *Config, logger *slog.Logger) *Application {
 	var (
 		repository = storage.NewInMemory()
 		api        = ethjsonrpc.NewEthJSONRpc(&ethjsonrpc.Config{
@@ -43,9 +43,10 @@ func NewApplication(_ context.Context, cfg *Config, logger *slog.Logger) (*Appli
 		cfg:           cfg,
 		eventListener: eventListener,
 		httpServer:    httpServer,
-	}, nil
+	}
 }
 
+//nolint:unparam
 func (a *Application) Run(ctx context.Context) error {
 	errGroup, _ := errgroup.WithContext(ctx)
 

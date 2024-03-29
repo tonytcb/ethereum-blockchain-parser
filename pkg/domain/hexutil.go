@@ -1,5 +1,7 @@
 package domain
 
+//nolint
+
 // @see Reference: https://github.com/ethereum/go-ethereum/blob/master/common/hexutil/hexutil.go
 
 import (

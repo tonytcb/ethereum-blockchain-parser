@@ -23,11 +23,7 @@ func main() {
 
 	appCtx, cancel := context.WithCancel(context.Background())
 
-	application, err := NewApplication(appCtx, cfg, logger)
-	if err != nil {
-		logger.Error("failed to create application", "error", err)
-		return
-	}
+	application := NewApplication(appCtx, cfg, logger)
 
 	if err = application.Run(appCtx); err != nil {
 		logger.Error("failed to run application:", "error", err)
