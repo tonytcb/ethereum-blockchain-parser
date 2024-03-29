@@ -17,6 +17,7 @@ const (
 
 type Repository interface {
 	Add(ctx context.Context, address string, transactions []domain.Transaction) error
+	UpdateLastBlock(ctx context.Context, address string, blockNumber int64) error
 }
 
 type EthJSONAPI interface {
@@ -48,7 +49,7 @@ type PoolingEventListener struct {
 	logger      *slog.Logger
 	cfg         *Config
 	api         EthJSONAPI
-	storage     Repository
+	repository  Repository
 	stopPooling map[string]chan struct{}
 	filters     map[string]string
 }
@@ -62,7 +63,7 @@ func NewPoolingEventListener(
 		logger:      slog.Default(),
 		cfg:         &Config{PoolingTime: defaultPoolingTime},
 		api:         api,
-		storage:     storage,
+		repository:  storage,
 		stopPooling: make(map[string]chan struct{}),
 		filters:     make(map[string]string),
 	}
@@ -74,7 +75,7 @@ func NewPoolingEventListener(
 	return e
 }
 
-func (e *PoolingEventListener) Subscribe(ctx context.Context, address string) error {
+func (e *PoolingEventListener) Listen(ctx context.Context, address string) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
@@ -102,8 +103,6 @@ func (e *PoolingEventListener) startPooling(address string, filter string) {
 	e.stopPooling[address] = stopPoolingCh
 	e.mu.Unlock()
 
-	defer e.logger.Info("Stopped pooling", "address", address)
-
 	for {
 		select {
 		case <-ticker.C:
@@ -117,12 +116,29 @@ func (e *PoolingEventListener) startPooling(address string, filter string) {
 				continue
 			}
 
-			if err = e.storage.Add(ctx, address, transactions); err != nil {
+			if len(transactions) == 0 {
+				continue
+			}
+
+			if err = e.repository.Add(ctx, address, transactions); err != nil {
 				e.logger.Error("Failed to store transactions", "error", err)
+				continue
+			}
+
+			lastBlock := e.highestBlockNumber(transactions)
+			if err = e.repository.UpdateLastBlock(ctx, address, lastBlock); err != nil {
+				e.logger.Error("Failed to update last block", "error", err)
 			}
 
 		case <-stopPoolingCh:
+			if err := e.api.RemoveFilter(context.Background(), filter); err != nil {
+				e.logger.Error("Failed to remove filter", "error", err)
+			}
+
 			ticker.Stop()
+
+			e.logger.Info("Stopped pooling", "address", address)
+
 			return
 		}
 	}
@@ -144,4 +160,23 @@ func (e *PoolingEventListener) Unsubscribe(ctx context.Context, address string) 
 	close(e.stopPooling[address])
 
 	return nil
+}
+
+func (e *PoolingEventListener) highestBlockNumber(transactions []domain.Transaction) int64 {
+	length := len(transactions)
+
+	if length == 0 {
+		return 0
+	}
+
+	highest := transactions[0].DecimalBlockNumber
+
+	for i := 0; i < length; i++ {
+		blockNumber := transactions[i].DecimalBlockNumber
+		if transactions[i].DecimalBlockNumber > highest {
+			highest = blockNumber
+		}
+	}
+
+	return highest
 }

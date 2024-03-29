@@ -6,4 +6,5 @@ var (
 	ErrNotSubscribed     = errors.New("not subscribed")
 	ErrAlreadySubscribed = errors.New("already subscribed")
 	ErrAddressNotFound   = errors.New("address not found")
+	ErrBlockNotFound     = errors.New("block not found")
 )

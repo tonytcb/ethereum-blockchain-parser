@@ -21,7 +21,6 @@
 go.work
 
 # Data files
-internal/.env
 *.vscode
 *.idea
 build/

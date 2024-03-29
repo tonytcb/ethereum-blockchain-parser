@@ -3,9 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/tonytcb/ethereum-blockchain-parser/pkg/domain"
 	"io"
 	"net/http"
+
+	"github.com/tonytcb/ethereum-blockchain-parser/pkg/domain"
 )
 
 type HTTPServer struct {
@@ -84,6 +85,20 @@ func (s *HTTPServer) getTransactionsHandler(w http.ResponseWriter, req *http.Req
 	_, _ = w.Write(response)
 }
 
-func (s *HTTPServer) getCurrentBlockHandler(w http.ResponseWriter, req *http.Request) {
-	// @TODO implement me
+func (s *HTTPServer) getCurrentBlockHandler(w http.ResponseWriter, _ *http.Request) {
+	blockNumber := s.parser.GetCurrentBlock()
+
+	if blockNumber == 0 {
+		http.Error(w, "", http.StatusNotFound)
+		return
+	}
+
+	response, err := json.Marshal(map[string]interface{}{"block_number": blockNumber})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(response)
 }

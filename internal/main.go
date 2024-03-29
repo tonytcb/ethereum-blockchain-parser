@@ -6,28 +6,20 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/pkg/errors"
 )
 
 func main() {
-	logger := slog.Default()
-
-	logger.Info("Starting app test...")
-
 	cfg, err := loadConfig()
 	if err != nil {
-		logger.Error("failed to load config", "error", err)
-		return
+		panic(errors.Wrap(err, "failed to load config"))
 	}
 
-	logLevel := slog.LevelInfo
-	if cfg.LogLevel == "debug" {
-		logLevel = slog.LevelDebug
-	}
-	logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel}))
-
+	logger := buildLogger(cfg)
 	slog.SetDefault(logger)
 
-	logger.Info("Application configurations", "data", cfg.LogFields())
+	logger.Info("Starting app", "configs", cfg.LogFields())
 
 	appCtx, cancel := context.WithCancel(context.Background())
 
@@ -46,7 +38,7 @@ func main() {
 
 	<-done
 
-	logger.Info("gracefully shutting down...")
+	logger.Info("Gracefully shutting down...")
 
 	cancel()
 
@@ -54,4 +46,14 @@ func main() {
 		logger.Error("failed to stop application: %v", err)
 		return
 	}
+}
+
+func buildLogger(cfg *Config) *slog.Logger {
+	logLevel := slog.LevelInfo
+
+	if cfg.LogLevel == "debug" {
+		logLevel = slog.LevelDebug
+	}
+
+	return slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel}))
 }

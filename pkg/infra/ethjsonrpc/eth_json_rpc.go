@@ -98,12 +98,17 @@ func (e *EthJSONRpc) FetchTransactions(ctx context.Context, address string) ([]d
 	var transactions = make([]domain.Transaction, len(response.Result))
 
 	for i, v := range response.Result {
-		transactions[i] = domain.Transaction{
-			Hash:        v.TransactionHash,
-			Address:     v.Address,
-			BlockNumber: v.BlockNumber,
-			BlockHash:   v.BlockHash,
+		t, err := domain.NewTransaction(
+			v.TransactionHash,
+			v.Address,
+			v.BlockNumber,
+			v.BlockHash,
+		)
+		if err != nil {
+			return nil, errors.Wrap(err, "error creating new transaction")
 		}
+
+		transactions[i] = t
 	}
 
 	return transactions, nil

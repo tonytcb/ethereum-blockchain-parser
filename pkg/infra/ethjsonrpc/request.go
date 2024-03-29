@@ -15,22 +15,6 @@ type requestPayload struct {
 	Params  interface{} `json:"params"`
 }
 
-type newFilterParamsObjects struct {
-	Address string `json:"address"`
-}
-
-type newFilterParams struct {
-	Params []newFilterParamsObjects
-}
-
-type getFilterChangesParams struct {
-	Addresses []string `json:"address"`
-}
-
-type uninstallFilterParams struct {
-	Addresses []string `json:"address"`
-}
-
 func newRequestPayload(id int64, method string, params interface{}) requestPayload {
 	return requestPayload{
 		JSONRpc: defaultJSONRPCVersion,
