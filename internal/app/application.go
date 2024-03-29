@@ -10,13 +10,13 @@ type Application struct {
 	cfg *config.Config
 }
 
-func NewApplication(ctx context.Context, cfg *config.Config) (*Application, error) {
+func NewApplication(_ context.Context, cfg *config.Config) (*Application, error) {
 	return &Application{
 		cfg: cfg,
 	}, nil
 }
 
-func (a *Application) Run(ctx context.Context) error {
+func (a *Application) Run(_ context.Context) error {
 	return nil
 }
 

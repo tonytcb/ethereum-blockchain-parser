@@ -20,7 +20,7 @@ type Config struct {
 	LogLevel string `mapstructure:"LOG_LEVEL"`
 	HTTPPort string `mapstructure:"HTTP_PORT"`
 
-	EthereumRpcAPIURL string        `mapstructure:"ETHEREUM_RPC_API_URL"`
+	EthereumRPCAPIURL string        `mapstructure:"ETHEREUM_RPC_API_URL"`
 	PoolingTime       time.Duration `mapstructure:"POOLING_TIME"`
 }
 
@@ -34,7 +34,7 @@ func (c *Config) LogFields() map[string]interface{} {
 		"Env":               c.Env,
 		"LogLevel":          c.LogLevel,
 		"HTTPPort":          c.HTTPPort,
-		"EthereumRpcAPIURL": c.EthereumRpcAPIURL,
+		"EthereumRPCAPIURL": c.EthereumRPCAPIURL,
 	}
 }
 

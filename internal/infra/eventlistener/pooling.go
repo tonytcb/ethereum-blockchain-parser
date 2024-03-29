@@ -8,11 +8,14 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/tonytcb/ethereum-blockchain-parser/internal/app/config"
 	"github.com/tonytcb/ethereum-blockchain-parser/internal/domain"
 )
 
-type TransactionsStorage interface {
+const (
+	defaultPoolingTime = 1 * time.Second
+)
+
+type Repository interface {
 	Add(ctx context.Context, address string, transactions []domain.Transaction) error
 }
 
@@ -22,30 +25,53 @@ type EthJSONAPI interface {
 	RemoveFilter(ctx context.Context, address string) error
 }
 
+type Options func(*PoolingEventListener)
+
+func WithConfig(cfg *Config) Options {
+	return func(e *PoolingEventListener) {
+		e.cfg = cfg
+	}
+}
+
+func WithLogger(l *slog.Logger) Options {
+	return func(e *PoolingEventListener) {
+		e.logger = l
+	}
+}
+
+type Config struct {
+	PoolingTime time.Duration
+}
+
 type PoolingEventListener struct {
 	mu          sync.Mutex
 	logger      *slog.Logger
-	cfg         *config.Config // @TODO replace by a local config struct
+	cfg         *Config
 	api         EthJSONAPI
-	storage     TransactionsStorage
+	storage     Repository
 	stopPooling map[string]chan struct{}
 	filters     map[string]string
 }
 
 func NewPoolingEventListener(
-	logger *slog.Logger,
-	cfg *config.Config,
 	api EthJSONAPI,
-	storage TransactionsStorage,
+	storage Repository,
+	opts ...Options,
 ) *PoolingEventListener {
-	return &PoolingEventListener{
-		logger:      logger,
-		cfg:         cfg,
+	e := &PoolingEventListener{
+		logger:      slog.Default(),
+		cfg:         &Config{PoolingTime: defaultPoolingTime},
 		api:         api,
 		storage:     storage,
 		stopPooling: make(map[string]chan struct{}),
 		filters:     make(map[string]string),
 	}
+
+	for _, opt := range opts {
+		opt(e)
+	}
+
+	return e
 }
 
 func (e *PoolingEventListener) Subscribe(ctx context.Context, address string) error {
@@ -76,12 +102,12 @@ func (e *PoolingEventListener) startPooling(address string, filter string) {
 	e.stopPooling[address] = stopPoolingCh
 	e.mu.Unlock()
 
-	defer e.logger.Info("Stopped pooling address %s", address)
+	defer e.logger.Info("Stopped pooling", "address", address)
 
 	for {
 		select {
 		case <-ticker.C:
-			e.logger.Debug("Pooling transactions against address %s, filter %s", address, filter)
+			e.logger.Debug("Pooling transactions", "address", address, "filter", filter)
 
 			ctx := context.Background()
 

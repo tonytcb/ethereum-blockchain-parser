@@ -1,0 +1,156 @@
+package ethjsonrpc
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"io"
+	"net/http"
+	"time"
+
+	"github.com/pkg/errors"
+
+	"github.com/tonytcb/ethereum-blockchain-parser/internal/domain"
+)
+
+const id = 1
+
+type Options func(*EthJSONRpc)
+
+func WithHTTPClient(c *http.Client) Options {
+	return func(e *EthJSONRpc) {
+		e.httpClient = c
+	}
+}
+
+type Config struct {
+	APIURL         string
+	RequestTimeout time.Duration
+}
+
+type EthJSONRpc struct {
+	cfg        *Config
+	httpClient *http.Client
+}
+
+func NewEthJSONRpc(cfg *Config, opts ...Options) *EthJSONRpc {
+	e := &EthJSONRpc{
+		cfg: cfg,
+		httpClient: &http.Client{
+			Timeout: cfg.RequestTimeout,
+		},
+	}
+
+	for _, opt := range opts {
+		opt(e)
+	}
+
+	return e
+}
+
+func (e *EthJSONRpc) NewFilter(ctx context.Context, address string) (string, error) {
+	payload := newRequestPayload(id, ethNewFilterMethod, newFilterParams{
+		Params: []newFilterParamsObjects{
+			{
+				Address: address,
+			},
+		},
+	})
+
+	resPayload, err := e.doPost(ctx, payload)
+	if err != nil {
+		return "", errors.Wrap(err, "error reading response body")
+	}
+
+	var response newFilterResponse
+
+	if err = json.Unmarshal(resPayload, &response); err != nil {
+		return "", errors.Wrap(err, "error unmarshalling response")
+	}
+
+	if response.Error != nil {
+		return "", errors.Errorf("error response: %s", response.Error.Message)
+	}
+
+	return response.Result, nil
+}
+
+func (e *EthJSONRpc) FetchTransactions(ctx context.Context, address string) ([]domain.Transaction, error) {
+	payload := newRequestPayload(id, ethGetFilterChangesMethod, getFilterChangesParams{Addresses: []string{address}})
+
+	resPayload, err := e.doPost(ctx, payload)
+	if err != nil {
+		return nil, errors.Wrap(err, "error reading response body")
+	}
+
+	var response getFilterChangesResponse
+
+	if err = json.Unmarshal(resPayload, &response); err != nil {
+		return nil, errors.Wrap(err, "error unmarshalling response")
+	}
+
+	if response.Error != nil {
+		return nil, errors.Errorf("error response: %s", response.Error.Message)
+	}
+
+	var transactions = make([]domain.Transaction, len(response.Result))
+
+	for i, v := range response.Result {
+		transactions[i] = domain.Transaction{
+			Hash:        v.TransactionHash,
+			Address:     v.Address,
+			BlockNumber: v.BlockNumber,
+			BlockHash:   v.BlockHash,
+		}
+	}
+
+	return transactions, nil
+}
+
+func (e *EthJSONRpc) RemoveFilter(ctx context.Context, address string) error {
+	payload := newRequestPayload(id, ethUninstallFilterMethod, uninstallFilterParams{Addresses: []string{address}})
+
+	resPayload, err := e.doPost(ctx, payload)
+	if err != nil {
+		return errors.Wrap(err, "error reading response body")
+	}
+
+	var response uninstallFilterResponse
+
+	if err = json.Unmarshal(resPayload, &response); err != nil {
+		return errors.Wrap(err, "error unmarshalling response")
+	}
+
+	if response.Error != nil {
+		return errors.Errorf("error response: %s", response.Error.Message)
+	}
+
+	return nil
+}
+
+func (e *EthJSONRpc) doPost(ctx context.Context, payload requestPayload) ([]byte, error) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return nil, errors.Wrap(err, "error marshalling payload")
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, e.cfg.APIURL, bytes.NewReader(data))
+	if err != nil {
+		return nil, errors.Wrap(err, "error creating new request")
+	}
+
+	res, err := e.httpClient.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error executing request")
+	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+
+	resPayload, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "error reading response body")
+	}
+
+	return resPayload, nil
+}
