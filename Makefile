@@ -7,7 +7,7 @@ help:
 	@ echo "Usage: make [target]"
 	@ sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' |  sed -e 's/^/ /'
 
-## up: starts the application
+## up: starts the application test
 up: 
 	docker-compose up parser
 	docker-compose down

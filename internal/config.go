@@ -1,4 +1,4 @@
-package config
+package main
 
 import (
 	"log"
@@ -10,16 +10,12 @@ import (
 )
 
 const (
-	mainEnvFile = ".env"
+	mainEnvFile = "internal/.env"
 )
 
 type Config struct {
-	// general
-	AppName  string `mapstructure:"APP_NAME"`
-	Env      string `mapstructure:"ENV"`
-	LogLevel string `mapstructure:"LOG_LEVEL"`
-	HTTPPort string `mapstructure:"HTTP_PORT"`
-
+	LogLevel          string        `mapstructure:"LOG_LEVEL"`
+	HTTPPort          string        `mapstructure:"HTTP_PORT"`
 	EthereumRPCAPIURL string        `mapstructure:"ETHEREUM_RPC_API_URL"`
 	PoolingTime       time.Duration `mapstructure:"POOLING_TIME"`
 }
@@ -30,15 +26,13 @@ func (c *Config) IsValid() error {
 
 func (c *Config) LogFields() map[string]interface{} {
 	return map[string]interface{}{
-		"AppName":           c.AppName,
-		"Env":               c.Env,
 		"LogLevel":          c.LogLevel,
 		"HTTPPort":          c.HTTPPort,
 		"EthereumRPCAPIURL": c.EthereumRPCAPIURL,
 	}
 }
 
-func Load(filenames ...string) (*Config, error) {
+func loadConfig(filenames ...string) (*Config, error) {
 	var cfg = &Config{}
 
 	filenames = append(filenames, mainEnvFile)

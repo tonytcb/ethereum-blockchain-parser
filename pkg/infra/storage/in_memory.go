@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/tonytcb/ethereum-blockchain-parser/internal/domain"
+	"github.com/tonytcb/ethereum-blockchain-parser/pkg/domain"
 )
 
 type InMemory struct {

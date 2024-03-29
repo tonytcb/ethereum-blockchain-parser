@@ -5,7 +5,7 @@ services:
     build:
       dockerfile: ./Dockerfile.dev
       context: .
-    container_name: parser-app
+    container_name: parser-app-test
     ports:
       - "8080:8080"
     restart: on-failure

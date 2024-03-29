@@ -6,27 +6,24 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/tonytcb/ethereum-blockchain-parser/internal/app"
-	"github.com/tonytcb/ethereum-blockchain-parser/internal/app/config"
 )
 
 func main() {
 	logger := slog.Default()
 
-	logger.Info("starting app...")
+	logger.Info("Starting app test...")
 
-	cfg, err := config.Load()
+	cfg, err := loadConfig()
 	if err != nil {
 		logger.Error("failed to load config", "error", err)
 		return
 	}
 
-	logger.Info("Application env vars", "data", cfg.LogFields())
+	logger.Info("Application configurations", "data", cfg.LogFields())
 
 	appCtx, cancel := context.WithCancel(context.Background())
 
-	application, err := app.NewApplication(appCtx, cfg)
+	application, err := NewApplication(appCtx, cfg)
 	if err != nil {
 		logger.Error("failed to create application", "error", err)
 		return

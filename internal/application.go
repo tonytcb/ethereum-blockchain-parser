@@ -1,16 +1,14 @@
-package app
+package main
 
 import (
 	"context"
-
-	"github.com/tonytcb/ethereum-blockchain-parser/internal/app/config"
 )
 
 type Application struct {
-	cfg *config.Config
+	cfg *Config
 }
 
-func NewApplication(_ context.Context, cfg *config.Config) (*Application, error) {
+func NewApplication(_ context.Context, cfg *Config) (*Application, error) {
 	return &Application{
 		cfg: cfg,
 	}, nil
