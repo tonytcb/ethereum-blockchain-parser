@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"math"
+	"regexp"
 )
 
 type Parser interface {
@@ -13,7 +14,7 @@ type Parser interface {
 	GetTransactions(address string) []Transaction
 }
 
-type Repository interface {
+type RepositoryReader interface {
 	GetTransactions(ctx context.Context, address string) ([]Transaction, error)
 	GetLatestBlock(ctx context.Context) (int64, error)
 }
@@ -22,18 +23,32 @@ type EventListener interface {
 	Listen(ctx context.Context, address string) error
 }
 
+type Options func(*parser)
+
+func WithLogger(l *slog.Logger) Options {
+	return func(e *parser) {
+		e.logger = l
+	}
+}
+
 type parser struct {
 	logger        *slog.Logger
-	repo          Repository
+	repo          RepositoryReader
 	eventListener EventListener
 }
 
-func NewParser(repo Repository, eventListener EventListener) Parser {
-	return &parser{
+func NewParser(repo RepositoryReader, eventListener EventListener, opts ...Options) Parser {
+	p := &parser{
 		logger:        slog.Default(), // @TODO to make it optional via options
 		repo:          repo,
 		eventListener: eventListener,
 	}
+
+	for _, opt := range opts {
+		opt(p)
+	}
+
+	return p
 }
 
 func (p *parser) GetCurrentBlock() int {
@@ -44,6 +59,7 @@ func (p *parser) GetCurrentBlock() int {
 
 	// Just to keep the proposed interface, we are returning zero in case of conversion overflow
 	if blockNumber > math.MaxInt32 {
+		p.logger.Error("Block number int32 overflow", "blockNumber", blockNumber)
 		return 0
 	}
 
@@ -52,7 +68,7 @@ func (p *parser) GetCurrentBlock() int {
 
 func (p *parser) GetTransactions(address string) []Transaction {
 	transactions, err := p.repo.GetTransactions(context.Background(), address)
-	if err != nil && errors.Is(err, ErrAddressNotFound) {
+	if (err != nil && errors.Is(err, ErrAddressNotFound)) || (transactions == nil) {
 		return []Transaction{}
 	}
 
@@ -60,7 +76,9 @@ func (p *parser) GetTransactions(address string) []Transaction {
 }
 
 func (p *parser) Subscribe(address string) bool {
-	// @TODO validate address
+	if !isValidAddress(address) {
+		return false
+	}
 
 	err := p.eventListener.Listen(context.Background(), address)
 	if err != nil {
@@ -68,4 +86,11 @@ func (p *parser) Subscribe(address string) bool {
 	}
 
 	return err == nil
+}
+
+// isValidAddress checks if the given string is a valid Ethereum address
+// @see https://goethereumbook.org/en/address-check/
+func isValidAddress(v string) bool {
+	re := regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
+	return re.MatchString(v)
 }

@@ -31,4 +31,4 @@ tests:
 
 ## generate-mocks: generates mocks for all interfaces through mockery
 generate-mocks:
-	- mockery --all --dir ./pkg --output ./pkg/test/mocks --exported --case=underscore
+	- mockery --all --dir ./pkg --output ./pkg/mocks --exported --case=underscore

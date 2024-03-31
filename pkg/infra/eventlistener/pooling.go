@@ -15,7 +15,7 @@ const (
 	defaultPoolingTime = 1 * time.Second
 )
 
-type Repository interface {
+type RepositoryWriter interface {
 	Add(ctx context.Context, address string, transactions []domain.Transaction) error
 	UpdateLastBlock(ctx context.Context, address string, blockNumber int64) error
 }
@@ -49,21 +49,21 @@ type PoolingEventListener struct {
 	logger      *slog.Logger
 	cfg         *Config
 	api         EthJSONAPI
-	repository  Repository
+	repo        RepositoryWriter
 	stopPooling map[string]chan struct{}
 	filters     map[string]string
 }
 
 func NewPoolingEventListener(
 	api EthJSONAPI,
-	storage Repository,
+	storage RepositoryWriter,
 	opts ...Options,
 ) *PoolingEventListener {
 	e := &PoolingEventListener{
 		logger:      slog.Default(),
 		cfg:         &Config{PoolingTime: defaultPoolingTime},
 		api:         api,
-		repository:  storage,
+		repo:        storage,
 		stopPooling: make(map[string]chan struct{}),
 		filters:     make(map[string]string),
 	}
@@ -120,13 +120,13 @@ func (e *PoolingEventListener) startPooling(address string, filter string) {
 				continue
 			}
 
-			if err = e.repository.Add(ctx, address, transactions); err != nil {
+			if err = e.repo.Add(ctx, address, transactions); err != nil {
 				e.logger.Error("Failed to store transactions", "error", err)
 				continue
 			}
 
 			lastBlock := e.highestBlockNumber(transactions)
-			if err = e.repository.UpdateLastBlock(ctx, address, lastBlock); err != nil {
+			if err = e.repo.UpdateLastBlock(ctx, address, lastBlock); err != nil {
 				e.logger.Error("Failed to update last block", "error", err)
 			}
 
