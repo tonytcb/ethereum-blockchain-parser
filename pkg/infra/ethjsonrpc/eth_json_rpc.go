@@ -75,10 +75,10 @@ func (e *EthJSONRpc) NewFilter(ctx context.Context, address string) (string, err
 	return response.Result, nil
 }
 
-func (e *EthJSONRpc) FetchTransactions(ctx context.Context, address string) ([]domain.Transaction, error) {
+func (e *EthJSONRpc) FetchTransactions(ctx context.Context, filter string) ([]domain.Transaction, error) {
 	e.currentID++
 
-	payload := newRequestPayload(e.currentID, ethGetFilterChangesMethod, []string{address})
+	payload := newRequestPayload(e.currentID, ethGetFilterChangesMethod, []string{filter})
 
 	resPayload, err := e.doPost(ctx, payload)
 	if err != nil {

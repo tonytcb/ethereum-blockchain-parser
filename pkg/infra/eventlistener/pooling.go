@@ -22,7 +22,7 @@ type RepositoryWriter interface {
 
 type EthJSONAPI interface {
 	NewFilter(ctx context.Context, address string) (string, error)
-	FetchTransactions(ctx context.Context, address string) ([]domain.Transaction, error)
+	FetchTransactions(ctx context.Context, filter string) ([]domain.Transaction, error)
 	RemoveFilter(ctx context.Context, address string) error
 }
 
@@ -131,10 +131,6 @@ func (e *PoolingEventListener) startPooling(address string, filter string) {
 			}
 
 		case <-stopPoolingCh:
-			if err := e.api.RemoveFilter(context.Background(), filter); err != nil {
-				e.logger.Error("Failed to remove filter", "error", err)
-			}
-
 			ticker.Stop()
 
 			e.logger.Info("Stopped pooling", "address", address)

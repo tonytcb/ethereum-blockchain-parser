@@ -23,9 +23,9 @@ func (_m *EthJSONAPI) EXPECT() *EthJSONAPI_Expecter {
 	return &EthJSONAPI_Expecter{mock: &_m.Mock}
 }
 
-// FetchTransactions provides a mock function with given fields: ctx, address
-func (_m *EthJSONAPI) FetchTransactions(ctx context.Context, address string) ([]domain.Transaction, error) {
-	ret := _m.Called(ctx, address)
+// FetchTransactions provides a mock function with given fields: ctx, filter
+func (_m *EthJSONAPI) FetchTransactions(ctx context.Context, filter string) ([]domain.Transaction, error) {
+	ret := _m.Called(ctx, filter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FetchTransactions")
@@ -34,10 +34,10 @@ func (_m *EthJSONAPI) FetchTransactions(ctx context.Context, address string) ([]
 	var r0 []domain.Transaction
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) ([]domain.Transaction, error)); ok {
-		return rf(ctx, address)
+		return rf(ctx, filter)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string) []domain.Transaction); ok {
-		r0 = rf(ctx, address)
+		r0 = rf(ctx, filter)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]domain.Transaction)
@@ -45,7 +45,7 @@ func (_m *EthJSONAPI) FetchTransactions(ctx context.Context, address string) ([]
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, address)
+		r1 = rf(ctx, filter)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -60,12 +60,12 @@ type EthJSONAPI_FetchTransactions_Call struct {
 
 // FetchTransactions is a helper method to define mock.On call
 //   - ctx context.Context
-//   - address string
-func (_e *EthJSONAPI_Expecter) FetchTransactions(ctx interface{}, address interface{}) *EthJSONAPI_FetchTransactions_Call {
-	return &EthJSONAPI_FetchTransactions_Call{Call: _e.mock.On("FetchTransactions", ctx, address)}
+//   - filter string
+func (_e *EthJSONAPI_Expecter) FetchTransactions(ctx interface{}, filter interface{}) *EthJSONAPI_FetchTransactions_Call {
+	return &EthJSONAPI_FetchTransactions_Call{Call: _e.mock.On("FetchTransactions", ctx, filter)}
 }
 
-func (_c *EthJSONAPI_FetchTransactions_Call) Run(run func(ctx context.Context, address string)) *EthJSONAPI_FetchTransactions_Call {
+func (_c *EthJSONAPI_FetchTransactions_Call) Run(run func(ctx context.Context, filter string)) *EthJSONAPI_FetchTransactions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string))
 	})
