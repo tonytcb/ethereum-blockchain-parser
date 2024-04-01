@@ -41,7 +41,7 @@ func TestNewInMemory(t *testing.T) {
 		t.Fatalf("expected error to be nil")
 	}
 
-	err = storage.UpdateLastBlock(ctx, "3", 3)
+	err = storage.UpdateLastBlock(ctx, "1", 3)
 	if err != nil {
 		t.Fatalf("expected error to be nil")
 	}
@@ -51,6 +51,6 @@ func TestNewInMemory(t *testing.T) {
 		t.Fatalf("expected error to be nil")
 	}
 	if latestBlock != 3 {
-		t.Fatalf("expected latest block to be 3")
+		t.Fatalf("expected latest block to be 3, got: %v", latestBlock)
 	}
 }

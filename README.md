@@ -50,3 +50,7 @@ func main() {
 }
 
 ```
+
+## Example
+
+As a simple example of usage, was implemented an application consuming this package and exposing an HTTP API at [internal package](./internal).
