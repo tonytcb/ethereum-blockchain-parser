@@ -54,3 +54,10 @@ func main() {
 ## Example
 
 As a simple example of usage, was implemented an application consuming this package and exposing an HTTP API at [internal package](./internal).
+
+## Links and references
+
+- [Etherscan](https://etherscan.io)
+- [Ethereum JSON RPC Interface](https://ethereum.org/en/developers/docs/apis/json-rpc)
+- [All That Node](https://www.allthatnode.com/ethereum.dsrv)
+- [Cloudflare ETH API](https://developers.cloudflare.com/web3/ethereum-gateway/reference/supported-api-methods/)
