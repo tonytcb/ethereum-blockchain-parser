@@ -30,19 +30,23 @@ import (
 )
 
 func main() {
-    repository = storage.NewInMemory()
-    api        = ethjsonrpc.NewEthJSONRpc(&ethjsonrpc.Config{
-        APIURL:         cfg.EthereumRPCAPIURL,
-        RequestTimeout: cfg.RequestTimeout,
-    })
-    eventListener = eventlistener.NewPoolingEventListener(
-        ctx,
-        api,
-        repository,
-        eventlistener.WithLogger(logger),
-        eventlistener.WithConfig(&eventlistener.Config{PoolingTime: cfg.PoolingTime}),
+    var (
+        logger     = slog.Default()
+        repository = storage.NewInMemory()
+        api        = ethjsonrpc.NewEthJSONRpc(&ethjsonrpc.Config{
+            APIURL:         "https://cloudflare-eth.com",
+            RequestTimeout: 3 * time.Millisecond,
+        })
+        eventListener = eventlistener.NewPoolingEventListener(
+            context.Background(),
+            api,
+            repository,
+            eventlistener.WithLogger(logger),
+            eventlistener.WithConfig(&eventlistener.Config{PoolingTime: 1 * time.Second}),
+        )
+
+        parser = domain.NewParser(repository, eventListener)
     )
-    parser = domain.NewParser(repository, eventListener)
 	    
     err := parser.Subscribe("0x1234567890")
     transactions, _ := parser.GetTransactions("0x1234567890")
