@@ -49,7 +49,7 @@ func main() {
     )
 	    
     err := parser.Subscribe("0x1234567890")
-    transactions, _ := parser.GetTransactions("0x1234567890")
+    transactions, err := parser.GetTransactions("0x1234567890")
     blockNumber := parser.GetCurrentBlock()
 }
 
