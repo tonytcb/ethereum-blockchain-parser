@@ -19,7 +19,7 @@ type Application struct {
 	httpServer    *HTTPServer
 }
 
-func NewApplication(_ context.Context, cfg *Config, logger *slog.Logger) *Application {
+func NewApplication(ctx context.Context, cfg *Config, logger *slog.Logger) *Application {
 	var (
 		repository = storage.NewInMemory()
 		api        = ethjsonrpc.NewEthJSONRpc(&ethjsonrpc.Config{
@@ -27,6 +27,7 @@ func NewApplication(_ context.Context, cfg *Config, logger *slog.Logger) *Applic
 			RequestTimeout: cfg.RequestTimeout,
 		})
 		eventListener = eventlistener.NewPoolingEventListener(
+			ctx,
 			api,
 			repository,
 			eventlistener.WithLogger(logger),

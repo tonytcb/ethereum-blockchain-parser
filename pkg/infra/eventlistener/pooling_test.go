@@ -105,7 +105,9 @@ func TestPoolingEventListener_Listen(t *testing.T) {
 		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
 			e := NewPoolingEventListener(
+				ctx,
 				tt.fields.api(t),
 				tt.fields.repo(t),
 				WithLogger(tt.fields.logger),

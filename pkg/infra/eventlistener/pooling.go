@@ -46,6 +46,7 @@ type Config struct {
 
 type PoolingEventListener struct {
 	mu          sync.Mutex
+	ctx         context.Context
 	logger      *slog.Logger
 	cfg         *Config
 	api         EthJSONAPI
@@ -55,11 +56,13 @@ type PoolingEventListener struct {
 }
 
 func NewPoolingEventListener(
+	ctx context.Context,
 	api EthJSONAPI,
 	storage RepositoryWriter,
 	opts ...Options,
 ) *PoolingEventListener {
 	e := &PoolingEventListener{
+		ctx:         ctx,
 		logger:      slog.Default(),
 		cfg:         &Config{PoolingTime: defaultPoolingTime},
 		api:         api,
@@ -79,7 +82,7 @@ func (e *PoolingEventListener) Listen(ctx context.Context, address string) error
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	if _, ok := e.filters[address]; ok {
+	if f, ok := e.filters[address]; ok && f != "" {
 		return domain.ErrAlreadySubscribed
 	}
 
@@ -105,6 +108,10 @@ func (e *PoolingEventListener) startPooling(address string, filter string) {
 
 	for {
 		select {
+		case <-e.ctx.Done():
+			e.stopPoolingFn(context.Background(), address, filter)
+			return
+
 		case <-ticker.C:
 			e.logger.Debug("Pooling transactions", "address", address, "filter", filter)
 
@@ -132,25 +139,32 @@ func (e *PoolingEventListener) startPooling(address string, filter string) {
 
 		case <-stopPoolingCh:
 			ticker.Stop()
-
-			e.logger.Info("Stopped pooling", "address", address)
-
+			e.stopPoolingFn(context.Background(), address, filter)
 			return
 		}
 	}
 }
 
-func (e *PoolingEventListener) Unsubscribe(ctx context.Context, address string) error {
+func (e *PoolingEventListener) stopPoolingFn(ctx context.Context, address, filter string) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	filter, ok := e.filters[address]
-	if !ok {
-		return domain.ErrNotSubscribed
-	}
+	delete(e.filters, address)
+	delete(e.stopPooling, address)
 
 	if err := e.api.RemoveFilter(ctx, filter); err != nil {
-		return errors.Wrap(err, "Failed to remove filter")
+		e.logger.Error("Failed to remove filter", "error", err, "address", address)
+	}
+
+	e.logger.Info("Stopped pooling", "address", address)
+}
+
+func (e *PoolingEventListener) Unsubscribe(_ context.Context, address string) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	if _, ok := e.filters[address]; !ok {
+		return domain.ErrNotSubscribed
 	}
 
 	close(e.stopPooling[address])

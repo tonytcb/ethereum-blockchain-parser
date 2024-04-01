@@ -39,7 +39,7 @@ type parser struct {
 
 func NewParser(repo RepositoryReader, eventListener EventListener, opts ...Options) Parser {
 	p := &parser{
-		logger:        slog.Default(), // @TODO to make it optional via options
+		logger:        slog.Default(),
 		repo:          repo,
 		eventListener: eventListener,
 	}
