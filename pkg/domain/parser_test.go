@@ -202,7 +202,7 @@ func Test_parser_Subscribe(t *testing.T) {
 			name: "should return false on invalid address",
 			fields: fields{
 				logger: logger,
-				eventListener: func(t *testing.T) domain.EventListener {
+				eventListener: func(*testing.T) domain.EventListener {
 					return nil
 				},
 			},

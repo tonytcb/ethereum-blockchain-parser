@@ -34,6 +34,7 @@ func TestPoolingEventListener_Listen(t *testing.T) {
 	}
 
 	type fields struct {
+		ctx    context.Context
 		logger *slog.Logger
 		cfg    *Config
 		api    func(*testing.T) EthJSONAPI
@@ -53,13 +54,14 @@ func TestPoolingEventListener_Listen(t *testing.T) {
 		{
 			name: "should start listening for new transactions but process none",
 			fields: fields{
+				ctx:    context.Background(),
 				logger: logger,
 				cfg:    &Config{PoolingTime: time.Millisecond * 10},
 				api: func(t *testing.T) EthJSONAPI {
 					api := mocks.NewEthJSONAPI(t)
 					api.EXPECT().NewFilter(mock.Anything, "0x123").Return("0x1", nil).Once()
-					api.EXPECT().FetchTransactions(mock.Anything, "0x1").Return([]domain.Transaction{}, nil).Maybe()
-					api.EXPECT().RemoveFilter(mock.Anything, "0x1").Return(nil).Once()
+					api.EXPECT().FetchTransactions(mock.Anything, "0x1").Return([]domain.Transaction{}, nil).Once()
+					api.EXPECT().RemoveFilter(mock.Anything, "0x1").Return(nil).Maybe()
 					return api
 				},
 				repo: func(t *testing.T) RepositoryWriter {
@@ -70,19 +72,20 @@ func TestPoolingEventListener_Listen(t *testing.T) {
 				ctx:     context.Background(),
 				address: "0x123",
 			},
-			waitTime: time.Millisecond * 20,
+			waitTime: time.Millisecond * 15,
 			wantErr:  false,
 		},
 		{
 			name: "should start listening for new transactions and process two transactions",
 			fields: fields{
+				ctx:    context.Background(),
 				logger: logger,
 				cfg:    &Config{PoolingTime: time.Millisecond * 50},
 				api: func(t *testing.T) EthJSONAPI {
 					api := mocks.NewEthJSONAPI(t)
-					api.EXPECT().NewFilter(mock.Anything, "0x123").Return("0x1", nil).Once()
-					api.EXPECT().FetchTransactions(mock.Anything, "0x1").Return(transactions, nil).Once()
-					api.EXPECT().RemoveFilter(mock.Anything, "0x1").Return(nil).Once()
+					api.EXPECT().NewFilter(mock.Anything, "0x123").Return("0x2", nil).Once()
+					api.EXPECT().FetchTransactions(mock.Anything, "0x2").Return(transactions, nil).Once()
+					api.EXPECT().RemoveFilter(mock.Anything, "0x2").Return(nil).Once()
 					return api
 				},
 				repo: func(t *testing.T) RepositoryWriter {
@@ -105,9 +108,8 @@ func TestPoolingEventListener_Listen(t *testing.T) {
 		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
 			e := NewPoolingEventListener(
-				ctx,
+				tt.fields.ctx,
 				tt.fields.api(t),
 				tt.fields.repo(t),
 				WithLogger(tt.fields.logger),

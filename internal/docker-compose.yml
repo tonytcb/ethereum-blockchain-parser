@@ -3,8 +3,8 @@ version: '3.9'
 services:
   parser:
     build:
-      dockerfile: ./Dockerfile.dev
-      context: .
+      dockerfile: Dockerfile.dev
+      context: ..
     container_name: parser-app-test
     ports:
       - "8080:8080"
