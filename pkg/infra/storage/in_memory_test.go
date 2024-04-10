@@ -9,9 +9,9 @@ import (
 
 func TestNewInMemory(t *testing.T) {
 	var (
-		t1 = domain.Transaction{BlockNumber: "1", DecimalBlockNumber: 1}
-		t2 = domain.Transaction{BlockNumber: "2", DecimalBlockNumber: 2}
-		t3 = domain.Transaction{BlockNumber: "3", DecimalBlockNumber: 3}
+		t1 = domain.Transaction{Hash: "0x1", BlockNumber: "1", DecimalBlockNumber: 1}
+		t2 = domain.Transaction{Hash: "0x2", BlockNumber: "2", DecimalBlockNumber: 2}
+		t3 = domain.Transaction{Hash: "0x3", BlockNumber: "3", DecimalBlockNumber: 3}
 
 		ctx = context.Background()
 	)
@@ -22,7 +22,7 @@ func TestNewInMemory(t *testing.T) {
 		t.Fatalf("expected error due to address not found")
 	}
 
-	err = storage.Add(ctx, "1", []domain.Transaction{t1, t2, t3})
+	err = storage.Add(ctx, "1", []domain.Transaction{t1, t2, t3, t1, t1, t2}) // with duplicates
 	if err != nil {
 		t.Fatalf("expected error to be nil")
 	}
@@ -33,7 +33,7 @@ func TestNewInMemory(t *testing.T) {
 	}
 
 	if len(all) != 3 {
-		t.Fatalf("expected 3 transactions")
+		t.Fatalf("expected 3 transactions, got: %v", len(all))
 	}
 
 	err = storage.UpdateLastBlock(ctx, "1", 1)

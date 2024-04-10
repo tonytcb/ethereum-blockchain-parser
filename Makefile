@@ -13,7 +13,7 @@ lint:
 
 ## tests: runs all tests, with no Docker
 tests:
-	go test -v -race -tags=integration ./pkg/...
+	go test -race -tags=integration ./pkg/...
 
 ## generate-mocks: generates mocks for all interfaces through mockery
 generate-mocks:

@@ -150,7 +150,23 @@ func (e *EthJSONRpc) doPost(ctx context.Context, payload requestPayload) ([]byte
 
 	req.Header.Set("Content-Type", "application/json")
 
-	res, err := e.httpClient.Do(req)
+	const maxRetries = 10
+
+	var res *http.Response
+
+	// TODO Add maxRetries and sleep time on configuration
+
+	for i := 1; i <= maxRetries; i++ {
+		res, err = e.httpClient.Do(req)
+		if err != nil {
+			continue
+		}
+		if res.StatusCode == http.StatusOK {
+			break
+		}
+		time.Sleep(time.Millisecond * 100 * time.Duration(i))
+	}
+
 	if err != nil {
 		return nil, errors.Wrap(err, "error executing request")
 	}

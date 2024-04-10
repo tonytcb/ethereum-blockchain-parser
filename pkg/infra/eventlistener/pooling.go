@@ -106,9 +106,15 @@ func (e *PoolingEventListener) startPooling(address string, filter string) {
 	e.stopPooling[address] = stopPoolingCh
 	e.mu.Unlock()
 
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-e.ctx.Done():
+			e.stopPoolingFn(context.Background(), address, filter)
+			return
+
+		case <-stopPoolingCh:
 			e.stopPoolingFn(context.Background(), address, filter)
 			return
 
@@ -136,11 +142,6 @@ func (e *PoolingEventListener) startPooling(address string, filter string) {
 			if err = e.repo.UpdateLastBlock(ctx, address, lastBlock); err != nil {
 				e.logger.Error("Failed to update last block", "error", err)
 			}
-
-		case <-stopPoolingCh:
-			ticker.Stop()
-			e.stopPoolingFn(context.Background(), address, filter)
-			return
 		}
 	}
 }

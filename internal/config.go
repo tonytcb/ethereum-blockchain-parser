@@ -30,6 +30,8 @@ func (c *Config) LogFields() map[string]interface{} {
 		"LogLevel":          c.LogLevel,
 		"HTTPPort":          c.HTTPPort,
 		"EthereumRPCAPIURL": c.EthereumRPCAPIURL,
+		"PoolingTime":       c.PoolingTime.String(),
+		"RequestTimeout":    c.RequestTimeout.String(),
 	}
 }
 
