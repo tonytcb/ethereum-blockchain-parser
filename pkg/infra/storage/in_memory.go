@@ -11,26 +11,32 @@ import (
 type InMemory struct {
 	mu           sync.RWMutex
 	lastBlock    map[string]int64
-	transactions map[string][]domain.Transaction
+	transactions map[string]map[string]domain.Transaction
 }
 
 func NewInMemory() *InMemory {
 	return &InMemory{
 		mu:           sync.RWMutex{},
 		lastBlock:    make(map[string]int64),
-		transactions: make(map[string][]domain.Transaction),
+		transactions: make(map[string]map[string]domain.Transaction),
 	}
 }
 
 func (s *InMemory) Add(_ context.Context, address string, transactions []domain.Transaction) error {
+	if len(transactions) == 0 {
+		return nil
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if _, ok := s.transactions[address]; !ok {
-		s.transactions[address] = make([]domain.Transaction, 0)
+		s.transactions[address] = make(map[string]domain.Transaction)
 	}
 
-	s.transactions[address] = append(s.transactions[address], transactions...)
+	for _, v := range transactions {
+		s.transactions[address][v.Hash] = v
+	}
 
 	return nil
 }
@@ -56,7 +62,7 @@ func (s *InMemory) GetTransactions(_ context.Context, address string) ([]domain.
 		return []domain.Transaction{}, domain.ErrAddressNotFound
 	}
 
-	return s.transactions[address], nil
+	return mapTransactionToSlice(s.transactions[address]), nil
 }
 
 func (s *InMemory) GetLatestBlock(_ context.Context) (int64, error) {
@@ -69,4 +75,12 @@ func (s *InMemory) GetLatestBlock(_ context.Context) (int64, error) {
 	}
 
 	return 0, domain.ErrBlockNotFound
+}
+
+func mapTransactionToSlice(m map[string]domain.Transaction) []domain.Transaction {
+	var slice []domain.Transaction
+	for _, v := range m {
+		slice = append(slice, v)
+	}
+	return slice
 }
